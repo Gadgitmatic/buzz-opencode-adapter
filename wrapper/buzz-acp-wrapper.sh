@@ -18,9 +18,24 @@ export BUZZ_ACP_CONTEXT_MESSAGE_LIMIT=0
 # Core memory (<core-memory>) STAYS injected by buzz-acp (default on) — it rides
 # the agent key, not the disk, so it survives harness/container moves.
 export BUZZ_ACP_HEARTBEAT_INTERVAL=0
-export BUZZ_ACP_MCP_COMMAND=/usr/bin/dokploy-mcp
+# Deliberate always-on lifetime policy: 0 = never self-terminate. The unit keeps
+# Restart=always, so a non-zero bound here would be resurrected on every idle
+# exit. Change both together if you ever want a self-reaping server agent.
+export BUZZ_ACP_EXIT_AFTER_INACTIVITY=0
+# Self-publish kind:10100 so Desktop can discover this agent and authorise
+# @mentions. Requires a buzz-acp build that carries PR #5691.
+export BUZZ_ACP_PUBLISH_PROFILE=true
+export BUZZ_ACP_DISPLAY_NAME=Gilfoyle
+# The Dokploy MCP is provided by OpenCode's global config (`mcp.dokploy`,
+# `npx @vibetools/dokploy-mcp`). The old harness-side command pointed at
+# /usr/bin/dokploy-mcp, which no longer exists after the 2026-10-24 MCP
+# consolidation. Rely on OpenCode's config instead of a second copy.
+# export BUZZ_ACP_MCP_COMMAND=/usr/bin/dokploy-mcp
 export DOKPLOY_URL="$(cat /home/admin/.config/opencode/secrets/dokploy-url)"
 export DOKPLOY_API_KEY="$(cat /home/admin/.config/opencode/secrets/dokploy-key)"
+# Token-lean reads for anything the agent runs through the CLI. Newer
+# harnesses set this themselves; this keeps older builds aligned.
+export BUZZ_OUTPUT_FORMAT=agent
 # opencode acp needs the API key for opencode-go provider
 export OPENCODE_API_KEY="$(grep '^OPENCODE_API_KEY=' /etc/opencode-web.env | cut -d= -f2-)"
 export HOME=/home/admin

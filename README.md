@@ -42,8 +42,18 @@ Set by the wrapper (secrets come from 0600 files, not committed):
 | `BUZZ_ACP_AGENT_COMMAND` | `opencode` | |
 | `BUZZ_ACP_AGENT_ARGS` | `acp` | |
 | `BUZZ_ACP_RESPOND_TO` | `owner-only` | |
+| `BUZZ_ACP_EXIT_AFTER_INACTIVITY` | `0` | always-on; the unit's `Restart=always` would resurrect a self-stop |
+| `BUZZ_ACP_PUBLISH_PROFILE` | `true` | publish/refresh the kind:10100 discovery record (needs PR #5691) |
+| `BUZZ_ACP_DISPLAY_NAME` | `Gilfoyle` | name in the kind:10100 record (else raw pubkey hex) |
+| `BUZZ_OUTPUT_FORMAT` | `agent` | token-lean CLI reads; newer harnesses set this themselves |
 | `HOME` | `/home/admin` | global opencode config (MCP servers) still loads |
 | cwd | `/home/admin/buzz` | project-local AGENTS.md + instructions + skills |
+
+The Dokploy MCP is **not** passed through `BUZZ_ACP_MCP_COMMAND`. The old
+`/usr/bin/dokploy-mcp` binary was retired on 2026-10-24; OpenCode's global
+`mcp.dokploy` (`npx @vibetools/dokploy-mcp`) supplies it to every session,
+including this one. Keeping a second harness-side copy caused a silent
+missing-MCP after the consolidation.
 
 Persona handoff: a launcher sets `BUZZ_ACP_SYSTEM_PROMPT` and/or
 `BUZZ_ACP_TEAM_INSTRUCTIONS` in `launch.policy_env`; `materialize-persona.sh`
@@ -69,8 +79,14 @@ goose needs the base prompt in its system prompt.
 
 ## Upstream status
 
-`buzz-acp` squats on ACP v2 ahead of the upstream RFD (see
-`crates/buzz-acp/src/acp.rs`). OpenCode reports v1, so system-prompt handoff
-goes through `instructions` instead. The `codex/slim-agent-context` branch
-slims the base prompt further but is unmerged and conflicts on merge; not
-adopted here yet.
+As of 2026-11-05, `buzz-acp` still pins `protocolVersion: 2` ahead of the
+upstream ACP RFD, and OpenCode still reports v1 with no `systemPrompt` on
+`session/new`, so system-prompt handoff goes through `instructions` instead.
+Upstream main still just logs and discards `agent_message_chunk`, so PR #7249
+(reply fallback) and PR #5691 (kind:10100 discovery) remain necessary. Both
+are still open; the adapter repo carries a rebased patch on main `920b1e64`
+for the agent image.
+
+`codex/slim-agent-context` (slim base prompt) is still unmerged; the
+`BUZZ_ACP_NO_BASE_PROMPT` + scoped `AGENTS.md` approach remains the
+config-only equivalent.
